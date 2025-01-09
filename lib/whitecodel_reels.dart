@@ -1,5 +1,7 @@
 library whitecodel_reels;
 
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:video_player/video_player.dart';
@@ -34,11 +36,19 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
   @override
   Widget build(BuildContext context) {
     Get.delete<WhiteCodelReelsController>();
-    Get.lazyPut<WhiteCodelReelsController>(() => WhiteCodelReelsController(
+    if (!Get.isRegistered<WhiteCodelReelsController>()) {
+      Get.put(
+        WhiteCodelReelsController(
           reelsVideoList: videoList ?? [],
           isCaching: isCaching,
           startIndex: startIndex,
-        ));
+        ),
+        permanent: true,
+      );
+    } else {
+      // Update the start index dynamically
+      Get.find<WhiteCodelReelsController>().updateStartIndex(startIndex);
+    }
     return Scaffold(
       backgroundColor: Colors.black,
       body: Obx(
@@ -58,26 +68,31 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
     return VisibilityDetector(
       key: Key(index.toString()),
       onVisibilityChanged: (visibilityInfo) {
-        if (visibilityInfo.visibleFraction < 0.5) {
-          controller.videoPlayerControllerList[index].seekTo(Duration.zero);
-          controller.videoPlayerControllerList[index].pause();
-          // controller.visible.value = true;
-          controller.refreshView();
-          controller.animationController.stop();
-        } else {
-          controller.listenEvents(index);
-          controller.videoPlayerControllerList[index].play();
-          // controller.visible.value = true;
-          Future.delayed(const Duration(milliseconds: 500), () {
-            // controller.visible.value = false;
-          });
-          controller.refreshView();
-          controller.animationController.repeat();
-          controller.initNearByVideos(index);
-          if (!controller.caching.contains(controller.videoList[index])) {
-            controller.cacheVideo(index);
+        if (index >= 0 && index < controller.videoPlayerControllerList.length) {
+          if (visibilityInfo.visibleFraction < 0.5) {
+            controller.videoPlayerControllerList[index].seekTo(Duration.zero);
+            controller.videoPlayerControllerList[index].pause();
+            // controller.visible.value = true;
+            controller.refreshView();
+            controller.animationController.stop();
+          } else {
+            controller.listenEvents(index);
+            controller.videoPlayerControllerList[index].play();
+            // controller.visible.value = true;
+            Future.delayed(const Duration(milliseconds: 500), () {
+              // controller.visible.value = false;
+            });
+            controller.refreshView();
+            controller.animationController.repeat();
+            controller.initNearByVideos(index);
+            if (!controller.caching.contains(controller.videoList[index])) {
+              controller.cacheVideo(index);
+            }
+            controller.visible.value = false;
           }
-          controller.visible.value = false;
+        } else {
+          // Handle the case where the index is invalid
+          log('Invalid index accessed Index: $index, List Length: ${controller.videoPlayerControllerList.length}');
         }
       },
       child: GestureDetector(
@@ -100,7 +115,12 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
         },
         child: Obx(
           () => controller.loading.value
-              ? loader ?? const Center(child: CircularProgressIndicator())
+              ? loader ??
+                  const Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.red,
+                    ),
+                  )
               : builder == null
                   ? VideoFullScreenPage(
                       videoPlayerController:
