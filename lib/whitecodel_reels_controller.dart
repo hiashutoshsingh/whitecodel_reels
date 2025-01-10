@@ -29,10 +29,10 @@ class WhiteCodelReelsController extends GetxController
   final visible = false.obs;
 
   // Animation controller for animating
-  late AnimationController animationController;
+  // late AnimationController animationController;
 
-  // Animation object
-  late Animation animation;
+  // // Animation object
+  // late Animation animation;
 
   // Current page index
   int page = 1;
@@ -96,12 +96,12 @@ class WhiteCodelReelsController extends GetxController
     super.onInit();
     videoList.addAll(reelsVideoList);
     // Initialize animation controller
-    animationController =
-        AnimationController(vsync: this, duration: const Duration(seconds: 5));
-    animation = CurvedAnimation(
-      parent: animationController,
-      curve: Curves.easeIn,
-    );
+    // animationController =
+    //     AnimationController(vsync: this, duration: const Duration(seconds: 5));
+    // animation = CurvedAnimation(
+    //   parent: animationController,
+    //   curve: Curves.easeIn,
+    // );
     // Initialize service and start timer
     initService(startIndex: startIndex);
     timer = Timer.periodic(const Duration(seconds: 1), (Timer t) {
@@ -114,13 +114,14 @@ class WhiteCodelReelsController extends GetxController
   // Lifecycle method called when the controller is closed
   @override
   void onClose() {
-    animationController.dispose();
+    // animationController.dispose();
     // Pause and dispose all video players
     for (var i = 0; i < videoPlayerControllerList.length; i++) {
       videoPlayerControllerList[i].pause();
       videoPlayerControllerList[i].dispose();
     }
     timer?.cancel();
+    pageController.dispose();
     super.onClose();
   }
 
@@ -139,15 +140,23 @@ class WhiteCodelReelsController extends GetxController
       log('Error initializing video at index $myindex: $e');
     }
 
-    animationController.repeat();
-    videoPlayerControllerList[myindex].play();
+    // animationController.repeat();
+    // videoPlayerControllerList[myindex].play();
     refreshView();
     // listenEvents(myindex);
     await initNearByVideos(myindex);
     loading.value = false;
 
     Future.delayed(Duration.zero, () {
-      pageController.jumpToPage(myindex);
+      if (pageController.hasClients && pageController.positions.length == 1) {
+        pageController.jumpToPage(myindex);
+        // Listen for page changes and start playback when the page is visible
+        pageController.addListener(() {
+          if (pageController.page?.toInt() == myindex) {
+            videoPlayerControllerList[myindex].play();
+          }
+        });
+      }
     });
   }
 

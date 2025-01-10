@@ -64,7 +64,7 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
             controller.videoPlayerControllerList[index].pause();
             // controller.visible.value = true;
             controller.refreshView();
-            controller.animationController.stop();
+            // controller.animationController.stop();
           } else {
             controller.listenEvents(index);
             controller.videoPlayerControllerList[index].play();
@@ -73,7 +73,7 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
               // controller.visible.value = false;
             });
             controller.refreshView();
-            controller.animationController.repeat();
+            // controller.animationController.repeat();
             controller.initNearByVideos(index);
             if (!controller.caching.contains(controller.videoList[index])) {
               controller.cacheVideo(index);
@@ -88,7 +88,7 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
             controller.videoPlayerControllerList[index].pause();
             controller.visible.value = true;
             controller.refreshView();
-            controller.animationController.stop();
+            // controller.animationController.stop();
           } else {
             controller.videoPlayerControllerList[index].play();
             controller.visible.value = true;
@@ -97,7 +97,7 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
             });
 
             controller.refreshView();
-            controller.animationController.repeat();
+            // controller.animationController.repeat();
           }
         },
         child: Obx(() {
