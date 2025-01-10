@@ -58,26 +58,28 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
     return VisibilityDetector(
       key: Key(index.toString()),
       onVisibilityChanged: (visibilityInfo) {
-        if (visibilityInfo.visibleFraction < 0.5) {
-          controller.videoPlayerControllerList[index].seekTo(Duration.zero);
-          controller.videoPlayerControllerList[index].pause();
-          // controller.visible.value = true;
-          controller.refreshView();
-          controller.animationController.stop();
-        } else {
-          controller.listenEvents(index);
-          controller.videoPlayerControllerList[index].play();
-          // controller.visible.value = true;
-          Future.delayed(const Duration(milliseconds: 500), () {
-            // controller.visible.value = false;
-          });
-          controller.refreshView();
-          controller.animationController.repeat();
-          controller.initNearByVideos(index);
-          if (!controller.caching.contains(controller.videoList[index])) {
-            controller.cacheVideo(index);
+        if (index >= 0 && index < controller.videoPlayerControllerList.length) {
+          if (visibilityInfo.visibleFraction < 0.5) {
+            controller.videoPlayerControllerList[index].seekTo(Duration.zero);
+            controller.videoPlayerControllerList[index].pause();
+            // controller.visible.value = true;
+            controller.refreshView();
+            controller.animationController.stop();
+          } else {
+            controller.listenEvents(index);
+            controller.videoPlayerControllerList[index].play();
+            // controller.visible.value = true;
+            Future.delayed(const Duration(milliseconds: 500), () {
+              // controller.visible.value = false;
+            });
+            controller.refreshView();
+            controller.animationController.repeat();
+            controller.initNearByVideos(index);
+            if (!controller.caching.contains(controller.videoList[index])) {
+              controller.cacheVideo(index);
+            }
+            controller.visible.value = false;
           }
-          controller.visible.value = false;
         }
       },
       child: GestureDetector(
