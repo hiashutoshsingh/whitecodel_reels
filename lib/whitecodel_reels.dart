@@ -12,26 +12,33 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
   final List<String>? videoList;
   final Widget? loader;
   final bool isCaching;
+  final int startIndex;
   final Widget Function(
-      BuildContext context,
-      int index,
-      Widget child,
-      VideoPlayerController videoPlayerController,
-      PageController pageController)? builder;
+    BuildContext context,
+    int index,
+    Widget child,
+    VideoPlayerController videoPlayerController,
+    PageController pageController,
+  )? builder;
 
-  const WhiteCodelReels(
-      {super.key,
-      required this.context,
-      this.videoList,
-      this.loader,
-      this.isCaching = false,
-      this.builder});
+  const WhiteCodelReels({
+    super.key,
+    required this.context,
+    this.videoList,
+    this.loader,
+    this.isCaching = false,
+    this.builder,
+    this.startIndex = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
     Get.delete<WhiteCodelReelsController>();
     Get.lazyPut<WhiteCodelReelsController>(() => WhiteCodelReelsController(
-        reelsVideoList: videoList ?? [], isCaching: isCaching));
+          reelsVideoList: videoList ?? [],
+          isCaching: isCaching,
+          startIndex: startIndex,
+        ));
     return Scaffold(
       backgroundColor: Colors.black,
       body: Obx(
@@ -51,24 +58,28 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
     return VisibilityDetector(
       key: Key(index.toString()),
       onVisibilityChanged: (visibilityInfo) {
-        if (visibilityInfo.visibleFraction < 0.5) {
-          controller.videoPlayerControllerList[index].seekTo(Duration.zero);
-          controller.videoPlayerControllerList[index].pause();
-          // controller.visible.value = true;
-          controller.refreshView();
-          controller.animationController.stop();
-        } else {
-          controller.listenEvents(index);
-          controller.videoPlayerControllerList[index].play();
-          // controller.visible.value = true;
-          Future.delayed(const Duration(milliseconds: 500), () {
-            // controller.visible.value = false;
-          });
-          controller.refreshView();
-          controller.animationController.repeat();
-          controller.initNearByVideos(index);
-          controller.cacheVideo(index);
-          controller.visible.value = false;
+        if (index >= 0 && index < controller.videoPlayerControllerList.length) {
+          if (visibilityInfo.visibleFraction < 0.5) {
+            controller.videoPlayerControllerList[index].seekTo(Duration.zero);
+            controller.videoPlayerControllerList[index].pause();
+            // controller.visible.value = true;
+            controller.refreshView();
+            // controller.animationController.stop();
+          } else {
+            controller.listenEvents(index);
+            controller.videoPlayerControllerList[index].play();
+            // controller.visible.value = true;
+            Future.delayed(const Duration(milliseconds: 500), () {
+              // controller.visible.value = false;
+            });
+            controller.refreshView();
+            // controller.animationController.repeat();
+            controller.initNearByVideos(index);
+            if (!controller.caching.contains(controller.videoList[index])) {
+              controller.cacheVideo(index);
+            }
+            controller.visible.value = false;
+          }
         }
       },
       child: GestureDetector(
@@ -77,7 +88,7 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
             controller.videoPlayerControllerList[index].pause();
             controller.visible.value = true;
             controller.refreshView();
-            controller.animationController.stop();
+            // controller.animationController.stop();
           } else {
             controller.videoPlayerControllerList[index].play();
             controller.visible.value = true;
@@ -86,26 +97,34 @@ class WhiteCodelReels extends GetView<WhiteCodelReelsController> {
             });
 
             controller.refreshView();
-            controller.animationController.repeat();
+            // controller.animationController.repeat();
           }
         },
-        child: Obx(
-          () => controller.loading.value
-              ? loader ?? const Center(child: CircularProgressIndicator())
-              : builder == null
-                  ? VideoFullScreenPage(
-                      videoPlayerController:
-                          controller.videoPlayerControllerList[index])
-                  : builder!(
-                      context,
-                      index,
-                      VideoFullScreenPage(
-                        videoPlayerController:
-                            controller.videoPlayerControllerList[index],
-                      ),
-                      controller.videoPlayerControllerList[index],
-                      controller.pageController),
-        ),
+        child: Obx(() {
+          if (controller.loading.value ||
+              !controller
+                  .videoPlayerControllerList[index].value.isInitialized) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: Colors.red,
+              ),
+            );
+          }
+
+          return builder == null
+              ? VideoFullScreenPage(
+                  videoPlayerController:
+                      controller.videoPlayerControllerList[index])
+              : builder!(
+                  context,
+                  index,
+                  VideoFullScreenPage(
+                    videoPlayerController:
+                        controller.videoPlayerControllerList[index],
+                  ),
+                  controller.videoPlayerControllerList[index],
+                  controller.pageController);
+        }),
       ),
     );
   }
